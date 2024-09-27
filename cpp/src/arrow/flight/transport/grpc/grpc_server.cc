@@ -623,6 +623,15 @@ class GrpcServerTransport : public internal::ServerTransport {
     // leftover processes can handle requests on accident
     builder.AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 0);
 
+    for (const auto& arg : options.generic_options) {
+      if (std::holds_alternative<int>(arg.second)) {
+        builder.AddChannelArgument(arg.first, std::get<int>(arg.second));
+      } else if (std::holds_alternative<std::string>(arg.second)) {
+        builder.AddChannelArgument(arg.first, std::get<std::string>(arg.second));
+      }
+      // Otherwise unimplemented
+    }
+
     if (options.builder_hook) {
       options.builder_hook(&builder);
     }

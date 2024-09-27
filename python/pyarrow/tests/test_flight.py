@@ -2057,7 +2057,7 @@ def test_middleware_multi_header():
 
 
 @pytest.mark.requires_testing_data
-def test_generic_options():
+def test_generic_options_client():
     """Test setting generic client options."""
     certs = example_tls_certs()
 
@@ -2075,6 +2075,18 @@ def test_generic_options():
         client = flight.connect(('localhost', s.port),
                                 tls_root_certs=certs["root_cert"],
                                 generic_options=options)
+        with pytest.raises((pa.ArrowInvalid, flight.FlightCancelledError)):
+            client.do_get(flight.Ticket(b'ints'))
+        client.close()
+
+@pytest.mark.requires_testing_data
+def test_generic_options_server():
+    """Test setting generic client options."""
+
+    # Try setting an int argument that will make requests fail
+    options = [("grpc.max_send_message_length", 32)]
+    with ConstantFlightServer(generic_options=options) as s:
+        client = flight.connect(('localhost', s.port))
         with pytest.raises((pa.ArrowInvalid, flight.FlightCancelledError)):
             client.do_get(flight.Ticket(b'ints'))
         client.close()

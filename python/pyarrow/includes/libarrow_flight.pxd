@@ -360,6 +360,7 @@ cdef extern from "arrow/flight/api.h" namespace "arrow" nogil:
         c_bool verify_client
         c_string root_certificates
         vector[pair[c_string, shared_ptr[CServerMiddlewareFactory]]] middleware
+        vector[pair[c_string, CIntStringVariant]] generic_options
 
     cdef cppclass CFlightClientOptions" arrow::flight::FlightClientOptions":
         c_string tls_root_certs

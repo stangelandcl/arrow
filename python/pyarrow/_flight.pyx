@@ -2822,7 +2822,10 @@ cdef class FlightServerBase(_Weakrefable):
         A dictionary of :class:`ServerMiddlewareFactory` instances. The
         string keys can be used to retrieve the middleware instance within
         RPC handlers (see :meth:`ServerCallContext.get_middleware`).
-
+    generic_options : list optional, default None
+        A list of generic (string, int or string) option tuples passed
+        to the underlying transport. Effect is implementation
+        dependent.
     """
 
     cdef:
@@ -2831,7 +2834,8 @@ cdef class FlightServerBase(_Weakrefable):
 
     def __init__(self, location=None, auth_handler=None,
                  tls_certificates=None, verify_client=None,
-                 root_certificates=None, middleware=None):
+                 root_certificates=None, middleware=None,
+                 generic_options=None):
         self.finalizer = None
         if isinstance(location, (bytes, str)):
             location = Location(location)
@@ -2847,11 +2851,13 @@ cdef class FlightServerBase(_Weakrefable):
             raise TypeError('`location` argument must be a string, tuple or a '
                             'Location instance')
         self.init(location, auth_handler, tls_certificates, verify_client,
-                  tobytes(root_certificates or b""), middleware)
+                  tobytes(root_certificates or b""), middleware, 
+                  generic_options)
 
     cdef init(self, Location location, ServerAuthHandler auth_handler,
               list tls_certificates, c_bool verify_client,
-              bytes root_certificates, dict middleware):
+              bytes root_certificates, dict middleware, 
+              generic_options):
         cdef:
             PyFlightServerVtable vtable = PyFlightServerVtable()
             PyFlightServer* c_server
@@ -2906,6 +2912,15 @@ cdef class FlightServerBase(_Weakrefable):
                 py_middleware,
                 start_call))
             c_options.get().middleware.push_back(c_middleware)
+
+        if generic_options:
+            for key, value in generic_options:
+                if isinstance(value, (str, bytes)):
+                    variant = CIntStringVariant(<c_string> tobytes(value))
+                else:
+                    variant = CIntStringVariant(<int> value)
+                c_options.get().generic_options.push_back(
+                    pair[c_string, CIntStringVariant](tobytes(key), variant))
 
         vtable.list_flights = &_list_flights
         vtable.get_flight_info = &_get_flight_info

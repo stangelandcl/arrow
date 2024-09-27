@@ -24,6 +24,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "arrow/flight/server_auth.h"
@@ -178,6 +179,10 @@ class ARROW_FLIGHT_EXPORT FlightServerOptions {
   /// runtime problems. See "Using Arrow C++ in your own project" in
   /// the documentation for more details.
   std::function<void(void*)> builder_hook;
+
+  /// \brief Generic connection options, passed to the underlying
+  ///     transport; interpretation is implementation-dependent.
+  std::vector<std::pair<std::string, std::variant<int, std::string>>> generic_options; 
 };
 
 /// \brief Skeleton RPC server implementation which can be used to create
